@@ -1,0 +1,32 @@
+g++\
+ read_nitf.cpp\
+ -o read_nitf\
+ -I/usr/local/include\
+ -L/usr/local/lib/\
+ -lcgm-c\
+ -lcli-c++\
+ -ldbi-c++\
+ -lexcept-c++\
+ -lhdf5-c++\
+ -lhdf5.lite-c++\
+ -lio-c++\
+ -lj2k-c\
+ -ljpeg\
+ -llogging-c++\
+ -lmath-c++\
+ -lmath.linear-c++\
+ -lmem-c++\
+ -lmt-c++\
+ -lnitf-c++\
+ -lnitf-c\
+ -lnrt-c\
+ -lopenjpeg\
+ -lplugin-c++\
+ -lpolygon-c++\
+ -lsio.lite-c++\
+ -lsys-c++\
+ -lstr-c++\
+ -ltiff-c++\
+ -ltypes-c++\
+ -lxerces-c\
+ -lxml.lite-c++
