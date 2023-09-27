@@ -25,6 +25,7 @@
 // */nitro-NITRO-2.11.2/modules/c++/nitf/tests/test_extract.cpp`
 
 #include <stdio.h>
+#include <iostream>
 
 #include <string>
 #include <vector>
@@ -35,14 +36,23 @@
 
 #include <import/nitf.hpp>
 
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
+
 static  std::vector<std::string> extract_image(const nitf::ImageSubheader& subheader, uint32_t index, nitf::ImageReader& imageReader,
     const std::string& outDir="", const std::string& baseName="")
 {
+    cout << "inside extract_image" << endl;
     nitf::SubWindow window(subheader);
     const auto nbpp = subheader.actualBitsPerPixel(); //const auto nbpp = subheader.numBitsPerPixel();
+    cout << "num bytes per pixel " << nbpp << endl;
     const auto bandData = imageReader.read(window, nbpp);
+    cout << "wad bandData read?" << endl;
 
     std::vector<std::string> outNames;
+    cout << "outNames" <<outNames[0] << endl;
     size_t band = 0;
     for (const auto& data : bandData) // for band, data in enumerate(bandData):
     {
@@ -61,6 +71,7 @@ static  std::vector<std::string> extract_image(const nitf::ImageSubheader& subhe
 
 static void extract_images(const std::string& fileName, const std::string& outDir = "")
 {
+    cout << "inside extract images" << endl;
     nitf::IOHandle handle(fileName);
     nitf::Reader reader;
     nitf::Record record = reader.read(handle);
@@ -79,30 +90,45 @@ static void extract_images(const std::string& fileName, const std::string& outDi
 
 int main(int argc, char **argv)
 {
-    try
-    {
-        //  Check argv and make sure we are happy
-        if (argc != 3)
-        {
-            std::cout << "Usage: %s <input-file> <output-file> \n" << argv[0]
-                    << std::endl;
-            exit( EXIT_FAILURE);
-        }
+    cout << "starting program..." << "\n";
 
-        // Check that wew have a valid NITF
-        if (nitf::Reader::getNITFVersion(argv[1]) == nitf::Version::NITF_VER_UNKNOWN)
-        {
-            std::cout << "Invalid NITF: " << argv[1] << std::endl;
-            exit( EXIT_FAILURE);
-        }
+    string filepath = "/home/dennis/Downloads/WPAFB-21Oct2009-TRAIN_NITF_003/WPAFB-21Oct2009/Data/TRAIN/NITF/";
+    filepath += "20091021203201-01000605-VIS.ntf.r0";
 
-        extract_images(argv[1]);
-        return 0;
+    auto ntf_ver = nitf::Reader::getNITFVersion(filepath);
+    if (IS_NITF20(ntf_ver)){
+        cout << "NITF v2.0" << "\n";
+    } else if(IS_NITF21(ntf_ver)){
+        cout << "NITF v2.1" << "\n";
+    } else {
+        cerr << "UNKNOWN VERSION" << endl;
+        return -1;
     }
-    catch (const std::exception& ex)
-    {
-        std::cerr << "ERROR!: " << ex.what() << "\n";
-        return 1;
-    }
+
+    cout << "opening file" << "\n";
+    nitf::IOHandle handle(filepath);
+
+    nitf::Reader reader;
+    nitf::Record record = reader.read(handle);
+    nitf::FileHeader header = record.getHeader();
+
+    // read header fields
+    string FHDR = header.fileHeader();
+    string FVER = header.fileVersion();
+    nitf::Field CLEVEL = header.getComplianceLevel();
+    nitf::Field STYPE = header.getSystemType();
+
+    cout << FHDR << "\n";
+    cout << FVER << "\n";
+    cout << CLEVEL.toString() << "\n";
+    cout << STYPE.toString() << "\n";
+
+    cout << "closing file" << "\n";
+    handle.close();
+
+    cout << "finished." << endl;
+
+
+ 
 }
 

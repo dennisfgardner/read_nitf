@@ -1,5 +1,6 @@
 g++\
  read_nitf.cpp\
+ -g\
  -o read_nitf\
  -I/usr/local/include\
  -L/usr/local/lib/\
