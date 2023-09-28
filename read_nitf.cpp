@@ -117,11 +117,46 @@ int main(int argc, char **argv)
     string FVER = header.fileVersion();
     nitf::Field CLEVEL = header.getComplianceLevel();
     nitf::Field STYPE = header.getSystemType();
+    nitf::Field OSTAID = header.getOriginStationID();
+    nitf::Field FDT = header.getFileDateTime();
+    nitf::Field FTITLE = header.getFileTitle();
+    string FSCLAS = header.getClassification();
+
+    nitf::FileSecurity file_security = header.getSecurityGroup();
+    string FSCLSY = file_security.getClassificationSystem();
+    string FSCODE = file_security.getCodewords();
+    nitf::Field FSCTLH = file_security.getControlAndHandling();
+    nitf::Field FSREL = file_security.getReleasingInstructions();
+    nitf::Field FL = header.getFileLength();
+    nitf::Field HL = header.getHeaderLength();
+    nitf::Field NUMI = header.getNumImages();
+    nitf::Field NUMS = header.getNumGraphics();
+
+    int image_number = 0;
+    nitf::ComponentInfo image_info = header.getImageInfo(image_number);
+    nitf::Field LISH001 = image_info.getLengthSubheader();
+    nitf::Field LI001 = image_info.getLengthData();
+
+    
 
     cout << FHDR << "\n";
     cout << FVER << "\n";
     cout << CLEVEL.toString() << "\n";
     cout << STYPE.toString() << "\n";
+    cout << OSTAID.toString() << "\n";
+    cout << FDT.toString() << "\n";
+    cout << FTITLE.toString() << "\n";
+    cout << FSCLAS << "\n";
+    cout << FSCLSY << "\n";
+    cout << FSCODE << "\n";
+    cout << FSCTLH.toString() << "\n";
+    cout << FSREL.toString() << "\n";
+    cout << FL.toString() << "\n";
+    cout << HL.toString() << "\n";
+    cout << NUMI.toString() << "\n";
+    cout << NUMS.toString() << "\n";
+    cout << LISH001.toString() << "\n";
+    cout << LI001.toString() << "\n";
 
     cout << "closing file" << "\n";
     handle.close();
