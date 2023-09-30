@@ -44,53 +44,6 @@ using std::string;
 #define PRINT(X) cout << #X << "=" << X.toString() << "\n"
 
 
-static  std::vector<std::string> extract_image(const nitf::ImageSubheader& subheader, uint32_t index, nitf::ImageReader& imageReader,
-    const std::string& outDir="", const std::string& baseName="")
-{
-    cout << "inside extract_image" << endl;
-    nitf::SubWindow window(subheader);
-    const auto nbpp = subheader.actualBitsPerPixel(); //const auto nbpp = subheader.numBitsPerPixel();
-    cout << "num bytes per pixel " << nbpp << endl;
-    const auto bandData = imageReader.read(window, nbpp);
-    cout << "wad bandData read?" << endl;
-
-    std::vector<std::string> outNames;
-    cout << "outNames" <<outNames[0] << endl;
-    size_t band = 0;
-    for (const auto& data : bandData) // for band, data in enumerate(bandData):
-    {
-        auto outName = str::format("%s_%d__%d_x_%d_%d_band_%d.out",
-            baseName.c_str(), index, window.getNumRows(), window.getNumCols(), static_cast<int>(nbpp), static_cast<int>(band));
-        outName = sys::Path::joinPaths(outDir, outName);
-        auto f = fopen(outName.c_str(), "wb"); // f = open(outName, "wb");
-        nitf::write(f, data); // fwrite(data.data(), sizeof(data[0]), data.size() / sizeof(data[0]), f);
-        fclose(f); // f.close();
-        outNames.push_back(outName);
-        band++;
-    }
-
-    return outNames;
-}
-
-static void extract_images(const std::string& fileName, const std::string& outDir = "")
-{
-    cout << "inside extract images" << endl;
-    nitf::IOHandle handle(fileName);
-    nitf::Reader reader;
-    nitf::Record record = reader.read(handle);
-
-    uint32_t i = 0;
-    for (nitf::ImageSegment segment : record.getImages())
-    {
-        auto imReader = reader.newImageReader(i);
-        extract_image(segment.getSubheader(), i, imReader, outDir, sys::Path::basename(fileName));
-
-        i++;
-    }
-
-    handle.close();
-}
-
 int main(int argc, char **argv)
 {
     cout << "starting program..." << "\n";
@@ -165,7 +118,8 @@ int main(int argc, char **argv)
     cout << "number of images " << images.getSize() << "\n";
 
     // TODO loop through image segments
-    nitf::ImageSegment segment = images[0];
+    int segment_number = 0;
+    nitf::ImageSegment segment = images[segment_number];
     nitf::ImageSubheader img_header = segment.getSubheader();
     
     
@@ -250,7 +204,11 @@ int main(int argc, char **argv)
     PRINT(NPPBV);
     PRINT(NBPP);
     
-    
+    nitf::ImageReader img_reader = reader.newImageReader(segment_number);
+    nitf::SubWindow window(img_header);
+    nitf::BufferList<std::byte> band_data = img_reader.read(window, NBPP);
+
+    cout << "band_data" << band_data[0] << endl;
 
 
     cout << "closing file" << "\n";
