@@ -41,6 +41,9 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+#define PRINT(X) cout << #X << "=" << X.toString() << "\n"
+
+
 static  std::vector<std::string> extract_image(const nitf::ImageSubheader& subheader, uint32_t index, nitf::ImageReader& imageReader,
     const std::string& outDir="", const std::string& baseName="")
 {
@@ -141,7 +144,7 @@ int main(int argc, char **argv)
 
     cout << FHDR << "\n";
     cout << FVER << "\n";
-    cout << CLEVEL.toString() << "\n";
+    PRINT(CLEVEL);
     cout << STYPE.toString() << "\n";
     cout << OSTAID.toString() << "\n";
     cout << FDT.toString() << "\n";
@@ -156,7 +159,99 @@ int main(int argc, char **argv)
     cout << NUMI.toString() << "\n";
     cout << NUMS.toString() << "\n";
     cout << LISH001.toString() << "\n";
-    cout << LI001.toString() << "\n";
+    PRINT(LI001);
+
+    nitf::List images = record.getImages();
+    cout << "number of images " << images.getSize() << "\n";
+
+    // TODO loop through image segments
+    nitf::ImageSegment segment = images[0];
+    nitf::ImageSubheader img_header = segment.getSubheader();
+    
+    
+    nitf::Field IM = img_header.getFilePartType();
+    nitf::Field IID1 = img_header.getImageId();
+    nitf::Field IDATIM = img_header.getImageDateAndTime();
+    nitf::Field TGTID = img_header.getTargetId();
+    nitf::Field IID2 = img_header.getImageTitle();
+    nitf::Field ISCLAS = img_header.getImageSecurityClass();
+
+    nitf::FileSecurity img_security = img_header.getSecurityGroup();
+    nitf::Field ISCLSY = img_security.getClassificationSystem();
+    nitf::Field ISCODE = img_security.getCodewords();
+    nitf::Field ISCTLH = img_security.getControlAndHandling();
+    nitf::Field ISREL = img_security.getReleasingInstructions();
+
+    nitf::Field ENCRYP = img_header.getEncrypted();
+    nitf::Field ISORCE = img_header.getImageSource();
+    nitf::Field NROWS = img_header.getNumRows();
+    nitf::Field NCOLS = img_header.getNumCols();
+    nitf::Field PVTYPE = img_header.getPixelValueType();
+    nitf::Field IREP = img_header.getImageRepresentation();
+    nitf::Field ICAT = img_header.getImageCategory();
+    nitf::Field ABPP = img_header.getActualBitsPerPixel();
+
+    PRINT(IM);
+    PRINT(IID1);
+    PRINT(IDATIM);
+    PRINT(TGTID);
+    PRINT(IID2);
+    PRINT(ISCLAS);
+    PRINT(ISCLSY);
+    PRINT(ISCODE);
+    PRINT(ISCTLH);
+    PRINT(ISREL);
+    PRINT(ENCRYP);
+    PRINT(ISORCE);
+    PRINT(NROWS);
+    PRINT(NCOLS);
+    PRINT(PVTYPE);
+    PRINT(IREP);
+    PRINT(ICAT);
+    PRINT(ABPP);
+
+    nitf::Field PJUST = img_header.getPixelJustification();
+    nitf::Field ICORDS = img_header.getImageCoordinateSystem();
+    nitf::Field IGEOLO = img_header.getCornerCoordinates();
+    nitf::Field NICOM = img_header.getNumImageComments();
+    nitf::Field IC = img_header.getImageCompression();
+    nitf::Field COMRAT = img_header.getCompressionRate();
+    nitf::Field NBANDS = img_header.getNumImageBands();
+    nitf::Field XBANDS = img_header.getNumMultispectralImageBands();
+
+    // TODO this should be a loop if there are multiple bands
+    nitf::BandInfo band_info = img_header.getBandInfo(0);
+    nitf::Field IREPBAND1 = band_info.getRepresentation();
+    nitf::Field ISUBCAT = band_info.getSubcategory();
+
+    nitf::Field ISYNC = img_header.getImageSyncCode();
+    nitf::Field IMODE = img_header.getImageMode();
+    nitf::Field NBPR = img_header.getNumBlocksPerRow();
+    nitf::Field NBPC = img_header.getNumBlocksPerCol();
+    nitf::Field NPPBH = img_header.getNumPixelsPerHorizBlock();
+    nitf::Field NPPBV = img_header.getNumPixelsPerVertBlock();
+    nitf::Field NBPP = img_header.getNumBitsPerPixel();
+
+    PRINT(PJUST);
+    PRINT(ICORDS);
+    PRINT(IGEOLO);
+    PRINT(NICOM);
+    PRINT(IC);
+    PRINT(COMRAT);
+    PRINT(NBANDS);
+    PRINT(XBANDS);
+    PRINT(IREPBAND1);
+    PRINT(ISUBCAT);
+    PRINT(ISYNC);
+    PRINT(IMODE);
+    PRINT(NBPR);
+    PRINT(NBPC);
+    PRINT(NPPBH);
+    PRINT(NPPBV);
+    PRINT(NBPP);
+    
+    
+
 
     cout << "closing file" << "\n";
     handle.close();
