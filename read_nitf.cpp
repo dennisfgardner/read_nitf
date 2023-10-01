@@ -1,38 +1,13 @@
-/* =========================================================================
- * This file is part of NITRO
- * =========================================================================
- *
- * (C) Copyright 2004 - 2014, MDA Information Systems LLC
- *
- * NITRO is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this program; if not, If not,
- * see <http://www.gnu.org/licenses/>.
- *
+/* Read NITF
+
+The NITRO library by mdaus is used https://github.com/mdaus/nitro which is
+under the GNU Lesser General Public License v3.0.
+
  */
 
-// modeled after nitf_extract.py
-// and
-// */nitro-NITRO-2.11.2/modules/c++/nitf/tests/test_extract.cpp`
-
-#include <stdio.h>
 #include <iostream>
-
 #include <string>
-#include <vector>
-#include <numeric> // std::iota
-
-#include <import/str.h>
-#include <import/sys.h>
+#include <filesystem>
 
 #include <import/nitf.hpp>
 
@@ -41,33 +16,14 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-#define PRINT(X) cout << #X << "=" << X.toString() << "\n"
+#define PRINT(X) cout << "\t " << #X << " = " << X.toString() << "\n"
 
 
-int main(int argc, char **argv)
-{
-    cout << "starting program..." << "\n";
-
-    string filepath = "/home/dennis/Downloads/WPAFB-21Oct2009-TRAIN_NITF_003/WPAFB-21Oct2009/Data/TRAIN/NITF/";
-    filepath += "20091021203201-01000605-VIS.ntf.r0";
-
-    auto ntf_ver = nitf::Reader::getNITFVersion(filepath);
-    if (IS_NITF20(ntf_ver)){
-        cout << "NITF v2.0" << "\n";
-    } else if(IS_NITF21(ntf_ver)){
-        cout << "NITF v2.1" << "\n";
-    } else {
-        cerr << "UNKNOWN VERSION" << endl;
-        return -1;
-    }
-
-    cout << "opening file" << "\n";
-    nitf::IOHandle handle(filepath);
-
-    nitf::Reader reader;
-    nitf::Record record = reader.read(handle);
-    nitf::FileHeader header = record.getHeader();
-
+void get_and_print_header_fields(nitf::FileHeader &header){
+    /*TODO clean this up, use nitf::Field for all to use PRINT macro
+    also think about using a map to loop through keys to print
+    and comment about field names obtained from doc
+    pull out file security into it's own function*/
     // read header fields
     string FHDR = header.fileHeader();
     string FVER = header.fileVersion();
@@ -79,10 +35,13 @@ int main(int argc, char **argv)
     string FSCLAS = header.getClassification();
 
     nitf::FileSecurity file_security = header.getSecurityGroup();
+
     string FSCLSY = file_security.getClassificationSystem();
     string FSCODE = file_security.getCodewords();
     nitf::Field FSCTLH = file_security.getControlAndHandling();
     nitf::Field FSREL = file_security.getReleasingInstructions();
+
+
     nitf::Field FL = header.getFileLength();
     nitf::Field HL = header.getHeaderLength();
     nitf::Field NUMI = header.getNumImages();
@@ -92,8 +51,6 @@ int main(int argc, char **argv)
     nitf::ComponentInfo image_info = header.getImageInfo(image_number);
     nitf::Field LISH001 = image_info.getLengthSubheader();
     nitf::Field LI001 = image_info.getLengthData();
-
-    
 
     cout << FHDR << "\n";
     cout << FVER << "\n";
@@ -113,37 +70,31 @@ int main(int argc, char **argv)
     cout << NUMS.toString() << "\n";
     cout << LISH001.toString() << "\n";
     PRINT(LI001);
+}
 
-    nitf::List images = record.getImages();
-    cout << "number of images " << images.getSize() << "\n";
 
-    // TODO loop through image segments
-    int segment_number = 0;
-    nitf::ImageSegment segment = images[segment_number];
-    nitf::ImageSubheader img_header = segment.getSubheader();
-    
-    
-    nitf::Field IM = img_header.getFilePartType();
-    nitf::Field IID1 = img_header.getImageId();
-    nitf::Field IDATIM = img_header.getImageDateAndTime();
-    nitf::Field TGTID = img_header.getTargetId();
-    nitf::Field IID2 = img_header.getImageTitle();
-    nitf::Field ISCLAS = img_header.getImageSecurityClass();
+void get_and_print_segment_header_fields(nitf::ImageSubheader &seg_header){
+    nitf::Field IM = seg_header.getFilePartType();
+    nitf::Field IID1 = seg_header.getImageId();
+    nitf::Field IDATIM = seg_header.getImageDateAndTime();
+    nitf::Field TGTID = seg_header.getTargetId();
+    nitf::Field IID2 = seg_header.getImageTitle();
+    nitf::Field ISCLAS = seg_header.getImageSecurityClass();
 
-    nitf::FileSecurity img_security = img_header.getSecurityGroup();
+    nitf::FileSecurity img_security = seg_header.getSecurityGroup();
     nitf::Field ISCLSY = img_security.getClassificationSystem();
     nitf::Field ISCODE = img_security.getCodewords();
     nitf::Field ISCTLH = img_security.getControlAndHandling();
     nitf::Field ISREL = img_security.getReleasingInstructions();
 
-    nitf::Field ENCRYP = img_header.getEncrypted();
-    nitf::Field ISORCE = img_header.getImageSource();
-    nitf::Field NROWS = img_header.getNumRows();
-    nitf::Field NCOLS = img_header.getNumCols();
-    nitf::Field PVTYPE = img_header.getPixelValueType();
-    nitf::Field IREP = img_header.getImageRepresentation();
-    nitf::Field ICAT = img_header.getImageCategory();
-    nitf::Field ABPP = img_header.getActualBitsPerPixel();
+    nitf::Field ENCRYP = seg_header.getEncrypted();
+    nitf::Field ISORCE = seg_header.getImageSource();
+    nitf::Field NROWS = seg_header.getNumRows();
+    nitf::Field NCOLS = seg_header.getNumCols();
+    nitf::Field PVTYPE = seg_header.getPixelValueType();
+    nitf::Field IREP = seg_header.getImageRepresentation();
+    nitf::Field ICAT = seg_header.getImageCategory();
+    nitf::Field ABPP = seg_header.getActualBitsPerPixel();
 
     PRINT(IM);
     PRINT(IID1);
@@ -164,27 +115,27 @@ int main(int argc, char **argv)
     PRINT(ICAT);
     PRINT(ABPP);
 
-    nitf::Field PJUST = img_header.getPixelJustification();
-    nitf::Field ICORDS = img_header.getImageCoordinateSystem();
-    nitf::Field IGEOLO = img_header.getCornerCoordinates();
-    nitf::Field NICOM = img_header.getNumImageComments();
-    nitf::Field IC = img_header.getImageCompression();
-    nitf::Field COMRAT = img_header.getCompressionRate();
-    nitf::Field NBANDS = img_header.getNumImageBands();
-    nitf::Field XBANDS = img_header.getNumMultispectralImageBands();
+    nitf::Field PJUST = seg_header.getPixelJustification();
+    nitf::Field ICORDS = seg_header.getImageCoordinateSystem();
+    nitf::Field IGEOLO = seg_header.getCornerCoordinates();
+    nitf::Field NICOM = seg_header.getNumImageComments();
+    nitf::Field IC = seg_header.getImageCompression();
+    nitf::Field COMRAT = seg_header.getCompressionRate();
+    nitf::Field NBANDS = seg_header.getNumImageBands();
+    nitf::Field XBANDS = seg_header.getNumMultispectralImageBands();
 
     // TODO this should be a loop if there are multiple bands
-    nitf::BandInfo band_info = img_header.getBandInfo(0);
+    nitf::BandInfo band_info = seg_header.getBandInfo(0);
     nitf::Field IREPBAND1 = band_info.getRepresentation();
     nitf::Field ISUBCAT = band_info.getSubcategory();
 
-    nitf::Field ISYNC = img_header.getImageSyncCode();
-    nitf::Field IMODE = img_header.getImageMode();
-    nitf::Field NBPR = img_header.getNumBlocksPerRow();
-    nitf::Field NBPC = img_header.getNumBlocksPerCol();
-    nitf::Field NPPBH = img_header.getNumPixelsPerHorizBlock();
-    nitf::Field NPPBV = img_header.getNumPixelsPerVertBlock();
-    nitf::Field NBPP = img_header.getNumBitsPerPixel();
+    nitf::Field ISYNC = seg_header.getImageSyncCode();
+    nitf::Field IMODE = seg_header.getImageMode();
+    nitf::Field NBPR = seg_header.getNumBlocksPerRow();
+    nitf::Field NBPC = seg_header.getNumBlocksPerCol();
+    nitf::Field NPPBH = seg_header.getNumPixelsPerHorizBlock();
+    nitf::Field NPPBV = seg_header.getNumPixelsPerVertBlock();
+    nitf::Field NBPP = seg_header.getNumBitsPerPixel();
 
     PRINT(PJUST);
     PRINT(ICORDS);
@@ -203,13 +154,64 @@ int main(int argc, char **argv)
     PRINT(NPPBH);
     PRINT(NPPBV);
     PRINT(NBPP);
+}
+
+int main(int argc, char **argv)
+{
+    cout << "starting NITF reading program..." << "\n";
+
+    // check number of args
+    if (argc != 2){
+        cerr << "ERROR: INCORRECT NUMBER OF ARGUMENTS" << "\n";
+        cerr << "usage: ./read_nitf <path_to_nitf>" <<endl;
+        return -1;
+    }
+
+    // get and check filepath
+    string filepath = argv[1];
+    if (!std::filesystem::exists(filepath)){
+        cerr << filepath << "\n";
+        cerr << "ERROR: FILE DOES NOT EXIST" << endl;
+        return -1;
+    }
+    
+    // get and check NITF version
+    cout << "checking NITF version" << "/n";
+    nitf::Version ver = nitf::Reader::getNITFVersion(filepath);
+    if (IS_NITF20(ver)){
+        cout << "\t NITF v2.0" << "\n";
+    } else if(IS_NITF21(ver)){
+        cout << "\t NITF v2.1" << "\n";
+    } else {
+        cerr << "ERROR: UNKNOWN NITF VERSION" << endl;
+        return -1;
+    }
+
+    cout << "opening file" << "\n";
+    nitf::IOHandle handle(filepath);
+    nitf::Reader reader;
+    nitf::Record record = reader.read(handle);
+
+    // get and print header fields
+    nitf::FileHeader header = record.getHeader();
+    get_and_print_header_fields(header);
+
+
+    nitf::List images = record.getImages();
+    cout << "number of images " << images.getSize() << "\n";
+
+    // TODO loop through image segments
+    int segment_number = 0;
+    nitf::ImageSegment segment = images[segment_number];
+    nitf::ImageSubheader seg_header = segment.getSubheader();
+    get_and_print_segment_header_fields(seg_header);
     
     nitf::ImageReader img_reader = reader.newImageReader(segment_number);
-    nitf::SubWindow window(img_header);
+    nitf::SubWindow window(seg_header);
+    nitf::Field NBPP = seg_header.getNumBitsPerPixel();
     nitf::BufferList<std::byte> band_data = img_reader.read(window, NBPP);
 
     cout << "band_data" << band_data[0] << endl;
-
 
     cout << "closing file" << "\n";
     handle.close();
