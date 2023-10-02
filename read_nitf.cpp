@@ -9,7 +9,9 @@ under the GNU Lesser General Public License v3.0.
 #include <string>
 #include <filesystem>
 
-#include <import/nitf.hpp>
+#include "import/nitf.hpp"
+#include "opencv2/core.hpp"
+#include <opencv2/imgcodecs.hpp>
 
 using std::cout;
 using std::cerr;
@@ -208,10 +210,19 @@ int main(int argc, char **argv)
     
     nitf::ImageReader img_reader = reader.newImageReader(segment_number);
     nitf::SubWindow window(seg_header);
+    nitf::Field NROWS = seg_header.getNumRows();
+    nitf::Field NCOLS = seg_header.getNumCols();
     nitf::Field NBPP = seg_header.getNumBitsPerPixel();
     nitf::BufferList<std::byte> band_data = img_reader.read(window, NBPP);
 
-    cout << "band_data" << band_data[0] << endl;
+    int rows = (int)NROWS;
+    int cols = (int)NCOLS;
+    cout << "rows " << rows << " cols " << cols << "\n";
+    cout << cv::getVersionMajor() << cv::getVersionMinor << cv::getVersionRevision << "\n";
+    cv::Mat img = cv::Mat(rows, cols, CV_8UC1, band_data[0]);
+    // cv::imwrite("out.png", img);
+
+    // cout << "band_data" << band_data[0] << endl;
 
     cout << "closing file" << "\n";
     handle.close();
